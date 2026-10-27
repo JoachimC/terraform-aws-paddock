@@ -1,0 +1,30 @@
+# Terraform / OpenTofu
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+
+# Real variable files name an account; only the examples are tracked.
+*.tfvars
+!example.tfvars
+
+# paddock-init.sh writes this for a first run and deletes it after. It swaps
+# the S3 backend for a local one, so it must never be committed.
+paddock_backend_override.tf
+
+# IDE / tooling (per-developer)
+.idea/
+.vscode/
+.claude/settings.local.json
+
+# Secrets — never commit
+.env
+.env.*
+*.pem
+*.key
+
+# OS
+.DS_Store
