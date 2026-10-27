@@ -244,7 +244,7 @@ run "given_a_budget_when_applied_then_it_filters_on_the_paddock_tag" {
   }
 
   assert {
-    condition     = one(aws_budgets_budget.monthly[0].cost_filter).values == ["user:Paddock$orders"]
+    condition     = one(aws_budgets_budget.monthly[0].cost_filter).values == tolist(["user:Paddock$orders"])
     error_message = "The budget must filter on the Paddock tag with the paddock's name."
   }
 }

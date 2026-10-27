@@ -188,12 +188,12 @@ Every resource has one owner paddock. Avoid sharing where you can:
 ## Development
 
 ```bash
-terraform fmt -check -recursive
-for dir in modules/*; do terraform -chdir="$dir" init -backend=false && terraform -chdir="$dir" test; done
+scripts/check.sh
 ```
 
-The tests use a mock provider and need no AWS account. Run them with `tofu`
-too. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+The script runs fmt, validate and test with Terraform and OpenTofu, in
+their official Docker images. It needs only Docker. The tests use a mock
+provider and need no AWS account. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Contributing
 

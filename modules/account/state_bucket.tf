@@ -80,7 +80,7 @@ locals {
         Effect    = "Deny"
         Principal = "*"
         Action    = "s3:*"
-        Resource  = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
+        Resource  = [local.state_bucket_arn, "${local.state_bucket_arn}/*"]
         Condition = {
           Bool = { "aws:SecureTransport" = "false" }
         }
@@ -98,7 +98,7 @@ locals {
           "s3:ListBucket",
           "s3:ListBucketVersions",
         ]
-        Resource = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
+        Resource = [local.state_bucket_arn, "${local.state_bucket_arn}/*"]
         Condition = {
           StringNotLike = {
             "aws:PrincipalArn" = concat([local.ci_role_pattern], var.admin_principal_arns)

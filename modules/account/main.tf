@@ -10,6 +10,8 @@ locals {
   partition = data.aws_partition.current.partition
 
   state_bucket = "${var.state_bucket_prefix}-terraform-state-${local.account}"
+  # Built from the name, so the bucket policy is known at plan time.
+  state_bucket_arn = "arn:${local.partition}:s3:::${local.state_bucket}"
 
   # Every deploy role and plan role sits under this IAM path. The state bucket
   # policy can then name all of them with one pattern, and it never has to

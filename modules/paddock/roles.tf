@@ -113,9 +113,9 @@ resource "aws_iam_role" "runtime" {
 }
 
 resource "aws_iam_role_policy" "runtime_baseline" {
-  for_each = aws_iam_role.runtime
+  for_each = toset(var.runtime_roles)
 
   name   = "paddock-baseline"
-  role   = each.value.id
+  role   = aws_iam_role.runtime[each.key].id
   policy = jsonencode(local.runtime_baseline_policy)
 }

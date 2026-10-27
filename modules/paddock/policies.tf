@@ -44,7 +44,7 @@ locals {
     Resource = "*"
   }]
 
-  dns_read_statements = local.publishes_dns ? [
+  dns_read_statements = [for s in [
     {
       Sid      = "DnsZoneRead"
       Effect   = "Allow"
@@ -69,7 +69,7 @@ locals {
       Action   = ["acm:DescribeCertificate", "acm:ListTagsForCertificate"]
       Resource = coalesce(var.account.wildcard_certificate_arn, "${local.arn}:acm:${local.region}:${local.account}:certificate/none")
     },
-  ] : []
+  ] : s if local.publishes_dns]
 
   # --- Deploy role ----------------------------------------------------------
 
@@ -97,8 +97,8 @@ locals {
     }
   }] : []
 
-  deploy_apigateway_statements = local.apigateway ? concat(
-    [
+  deploy_apigateway_statements = concat(
+    [for s in [
       {
         Sid       = "CreateRestApi"
         Effect    = "Allow"
@@ -128,8 +128,8 @@ locals {
         Action   = "apigateway:GET"
         Resource = ["${local.apigateway_arn}/restapis", "${local.apigateway_arn}/domainnames"]
       },
-    ],
-    local.publishes_dns ? [
+    ] : s if local.apigateway],
+    [for s in [
       {
         Sid       = "CreateDomainName"
         Effect    = "Allow"
@@ -143,10 +143,10 @@ locals {
         Action   = "apigateway:*"
         Resource = local.domain_name_arns
       },
-    ] : [],
-  ) : []
+    ] : s if local.apigateway && local.publishes_dns],
+  )
 
-  deploy_kms_statements = local.kms ? [
+  deploy_kms_statements = [for s in [
     {
       Sid       = "CreateKey"
       Effect    = "Allow"
@@ -173,7 +173,7 @@ locals {
       Action   = ["kms:ListAliases", "kms:ListKeys"]
       Resource = "*"
     },
-  ] : []
+  ] : s if local.kms]
 
   deploy_state_statements = [
     local.state_list_statement,
@@ -298,7 +298,7 @@ locals {
     Resource = scope.named
   }]
 
-  plan_apigateway_statements = local.apigateway ? [
+  plan_apigateway_statements = [for s in [
     {
       Sid       = "ReadOwnRestApis"
       Effect    = "Allow"
@@ -312,9 +312,9 @@ locals {
       Action   = "apigateway:GET"
       Resource = concat(["${local.apigateway_arn}/restapis", "${local.apigateway_arn}/domainnames"], local.domain_name_arns)
     },
-  ] : []
+  ] : s if local.apigateway]
 
-  plan_kms_statements = local.kms ? [
+  plan_kms_statements = [for s in [
     {
       Sid       = "ReadOwnKeys"
       Effect    = "Allow"
@@ -328,7 +328,7 @@ locals {
       Action   = ["kms:ListAliases", "kms:ListKeys"]
       Resource = "*"
     },
-  ] : []
+  ] : s if local.kms]
 
   plan_policy = {
     Version = "2012-10-17"

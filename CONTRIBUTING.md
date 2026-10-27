@@ -27,14 +27,14 @@ is small, but these rules keep the history easy to read.
 
 * The modules support Terraform 1.10 or later and OpenTofu 1.10 or later. Use
   only what both tools support. CI runs every check with both.
-* Before you push, run these commands. CI runs the same commands.
+* Before you push, run the checks. They need only Docker. CI runs the same
+  script with the same images.
   ```bash
-  terraform fmt -check -recursive
-  for dir in modules/* examples/*; do terraform -chdir="$dir" init -backend=false && terraform -chdir="$dir" validate; done
-  for dir in modules/*; do terraform -chdir="$dir" test; done
-  shellcheck scripts/*.sh
+  scripts/check.sh            # fmt, validate and test, with Terraform and OpenTofu 1.10
+  scripts/check.sh --latest   # the same, with the newest release of each tool
+  docker run --rm -v "$PWD:/mnt:ro" -w /mnt koalaman/shellcheck:stable scripts/*.sh
   ```
-  The same commands with `tofu` in place of `terraform` must also pass.
+  To check one tool only, name it: `scripts/check.sh tofu`.
 * Build IAM policies with `jsonencode`, not the `aws_iam_policy_document`
   data source. The tests can then read a policy at plan time without AWS.
 * Scope every new permission by the paddock's name or its `Paddock` tag.

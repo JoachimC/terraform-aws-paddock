@@ -10,9 +10,6 @@ mock_provider "aws" {
   mock_data "aws_partition" {
     defaults = { partition = "aws" }
   }
-  mock_resource "aws_s3_bucket" {
-    defaults = { arn = "arn:aws:s3:::example-terraform-state-123456789012" }
-  }
   mock_resource "aws_iam_openid_connect_provider" {
     defaults = { arn = "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com" }
   }
@@ -34,14 +31,18 @@ variables {
   admin_principal_arns = ["arn:aws:iam::123456789012:user/admin"]
 }
 
-run "given_a_prefix_when_applied_then_the_bucket_name_holds_the_account_id" {
+run "given_a_prefix_when_planned_then_the_bucket_name_holds_the_account_id" {
+  command = plan
+
   assert {
     condition     = aws_s3_bucket.state.bucket == "example-terraform-state-123456789012"
     error_message = "The state bucket must be named <prefix>-terraform-state-<account id>."
   }
 }
 
-run "given_admins_when_applied_then_only_ci_roles_and_admins_reach_state" {
+run "given_admins_when_planned_then_only_ci_roles_and_admins_reach_state" {
+  command = plan
+
   assert {
     condition = toset(one([
       for statement in jsondecode(aws_s3_bucket_policy.state.policy).Statement : statement
@@ -62,7 +63,9 @@ run "given_admins_when_applied_then_only_ci_roles_and_admins_reach_state" {
   }
 }
 
-run "given_any_settings_when_applied_then_plain_http_is_denied" {
+run "given_any_settings_when_planned_then_plain_http_is_denied" {
+  command = plan
+
   assert {
     condition = one([
       for statement in jsondecode(aws_s3_bucket_policy.state.policy).Statement : statement
@@ -72,7 +75,9 @@ run "given_any_settings_when_applied_then_plain_http_is_denied" {
   }
 }
 
-run "given_no_dns_when_applied_then_no_zone_or_certificate_exists" {
+run "given_no_dns_when_planned_then_no_zone_or_certificate_exists" {
+  command = plan
+
   assert {
     condition     = length(aws_route53_zone.this) == 0 && length(aws_acm_certificate.wildcard) == 0
     error_message = "Without dns, the module must create no zone and no certificate."
@@ -84,7 +89,9 @@ run "given_no_dns_when_applied_then_no_zone_or_certificate_exists" {
   }
 }
 
-run "given_dns_with_a_parent_zone_when_applied_then_the_zone_is_delegated_and_a_wildcard_is_issued" {
+run "given_dns_with_a_parent_zone_when_planned_then_the_zone_is_delegated_and_a_wildcard_is_issued" {
+  command = plan
+
   variables {
     dns = {
       domain         = "apps.example.com"
@@ -108,7 +115,9 @@ run "given_dns_with_a_parent_zone_when_applied_then_the_zone_is_delegated_and_a_
   }
 }
 
-run "given_admins_when_applied_then_they_are_published_for_data_guard" {
+run "given_admins_when_planned_then_they_are_published_for_data_guard" {
+  command = plan
+
   assert {
     condition     = aws_ssm_parameter.public["admin-principal-arns"].type == "StringList" && aws_ssm_parameter.public["admin-principal-arns"].value == "arn:aws:iam::123456789012:user/admin"
     error_message = "modules/data-guard reads the admins from /account/public/admin-principal-arns."

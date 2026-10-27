@@ -18,54 +18,20 @@ concurrency:
 
 jobs:
   # Every check runs with both tools, because the modules promise both. A
-  # feature that only one of them has fails here first.
+  # feature that only one of them has fails here first. The script runs the
+  # tools in their official images, so CI and a local run use the same
+  # versions.
   check:
     strategy:
       fail-fast: false
       matrix:
         tool: [terraform, tofu]
     runs-on: ubuntu-latest
-    env:
-      TF: ${{ matrix.tool }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: scripts/check.sh ${{ matrix.tool }}
 
-      - if: matrix.tool == 'terraform'
-        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          terraform_version: "~1.10"
-          terraform_wrapper: false
-
-      - if: matrix.tool == 'tofu'
-        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with:
-          tofu_version: "~1.10"
-          tofu_wrapper: false
-
-      - name: Format
-        run: $TF fmt -check -recursive -diff
-
-      # -backend=false: the example roots declare an S3 backend, and CI has
-      # no AWS credentials and needs none.
-      - name: Validate
-        run: |
-          for dir in modules/* examples/*; do
-            echo "::group::$dir"
-            $TF -chdir="$dir" init -backend=false -input=false
-            $TF -chdir="$dir" validate
-            echo "::endgroup::"
-          done
-
-      # The tests use a mock provider: no AWS account is touched.
-      - name: Test
-        run: |
-          for dir in modules/*; do
-            echo "::group::$dir"
-            $TF -chdir="$dir" test
-            echo "::endgroup::"
-          done
-
-  # The oldest supported version is pinned above (~1.10). This job runs the
+  # check.sh pins the oldest supported version (1.10). This job runs the
   # newest, so a deprecation shows before it becomes a break.
   check-latest:
     strategy:
@@ -73,33 +39,13 @@ jobs:
       matrix:
         tool: [terraform, tofu]
     runs-on: ubuntu-latest
-    env:
-      TF: ${{ matrix.tool }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - if: matrix.tool == 'terraform'
-        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          terraform_wrapper: false
-
-      - if: matrix.tool == 'tofu'
-        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with:
-          tofu_wrapper: false
-
-      - name: Test
-        run: |
-          for dir in modules/*; do
-            echo "::group::$dir"
-            $TF -chdir="$dir" init -backend=false -input=false
-            $TF -chdir="$dir" test
-            echo "::endgroup::"
-          done
+      - run: scripts/check.sh --latest ${{ matrix.tool }}
 
   shellcheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # The runner image ships shellcheck.
-      - run: shellcheck scripts/*.sh
+      # The same image as the local command in CONTRIBUTING.md.
+      - run: docker run --rm -v "$PWD:/mnt:ro" -w /mnt koalaman/shellcheck:stable scripts/*.sh
