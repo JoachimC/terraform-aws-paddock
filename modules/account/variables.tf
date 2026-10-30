@@ -72,6 +72,12 @@ variable "activate_cost_allocation_tag" {
   default     = false
 }
 
+variable "create_api_gateway_service_linked_role" {
+  description = "Create the API Gateway service-linked role. API Gateway needs it before the first custom domain, and a paddock's deploy role may not create it. An account holds one, so set this to false when the account already has it, or import it."
+  type        = bool
+  default     = true
+}
+
 variable "api_gateway_cloudwatch_logging" {
   description = "Create the account-wide role that lets API Gateway write access logs and execution logs to CloudWatch. It is one setting per account and region, so it lives here and not in a paddock."
   type        = bool

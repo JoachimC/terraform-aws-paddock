@@ -181,6 +181,10 @@ Every resource has one owner paddock. Avoid sharing where you can:
 * **The bucket exists, but no state does, anywhere.** Import the existing
   resources into a new state with `import` blocks, or delete them and start
   again.
+* **The first run fails on the API Gateway service-linked role with
+  `InvalidInput` (it already exists).** The account had it before. Set
+  `create_api_gateway_service_linked_role = false`, or import it with an
+  `import` block to `module.account.aws_iam_service_linked_role.api_gateway[0]`.
 * **A bad apply.** The bucket keeps old versions of every state file for
   `noncurrent_state_version_days`. Restore an earlier version with
   `aws s3api copy-object`.

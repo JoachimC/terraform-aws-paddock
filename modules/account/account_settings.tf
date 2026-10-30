@@ -50,3 +50,12 @@ resource "aws_api_gateway_account" "this" {
 
   cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch[0].arn
 }
+
+# API Gateway needs this role before it creates the first custom domain in
+# the account. A paddock's deploy role may not create IAM roles, so without
+# it the first custom domain fails. AWS keeps one per account.
+resource "aws_iam_service_linked_role" "api_gateway" {
+  count = var.create_api_gateway_service_linked_role ? 1 : 0
+
+  aws_service_name = "ops.apigateway.amazonaws.com"
+}
