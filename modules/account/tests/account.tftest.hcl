@@ -143,3 +143,25 @@ run "given_an_existing_provider_without_its_arn_when_planned_then_it_is_rejected
 
   expect_failures = [aws_s3_bucket_policy.state]
 }
+
+run "given_the_defaults_when_planned_then_it_creates_the_api_gateway_service_linked_role" {
+  command = plan
+
+  assert {
+    condition     = aws_iam_service_linked_role.api_gateway[0].aws_service_name == "ops.apigateway.amazonaws.com"
+    error_message = "The account layer must create the API Gateway service-linked role, so a paddock's first custom domain works."
+  }
+}
+
+run "given_an_existing_service_linked_role_when_planned_then_it_creates_none" {
+  command = plan
+
+  variables {
+    create_api_gateway_service_linked_role = false
+  }
+
+  assert {
+    condition     = length(aws_iam_service_linked_role.api_gateway) == 0
+    error_message = "With create_api_gateway_service_linked_role = false, the account layer must not create the role."
+  }
+}
